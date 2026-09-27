@@ -10,6 +10,8 @@ Backend được triển khai bằng **FastAPI**, kết hợp với giao diện 
 
 ---
 
+## Đường link các checkpoints : https://drive.google.com/drive/folders/1jGdX0p8tIiO8To0tW5-vhyTF8PwNtbjW?usp=drive_link
+
 ## ✨ 1. Tính năng chính
 
 * 📤 Upload ảnh kệ hàng.
