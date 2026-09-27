@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Shelf Product Recognition - Demo</title>
+<link rel="stylesheet" href="style.css">
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- FontAwesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+  <header class="top-bar">
+    <div class="title-section">
+      <h1><i class="fa-solid fa-wand-magic-sparkles"></i> Phân tích sản phẩm</h1>
+      <p>Tải ảnh kệ hàng để AI phát hiện và đếm số lượng sản phẩm</p>
+    </div>
+    <div class="actions">
+      <div class="config-mini">
+         <input type="text" id="apiUrl" value="http://localhost:8000/analyze" placeholder="API URL" style="display:none;">
+         <label for="threshold" style="font-size: 12px; color: var(--text-muted); font-weight: 600;">Độ tin cậy:</label>
+         <div class="number-spinner">
+           <button id="decThreshold" class="spinner-btn"><i class="fa-solid fa-minus"></i></button>
+           <input type="number" id="threshold" value="0" min="-1" max="1" step="0.1">
+           <button id="incThreshold" class="spinner-btn"><i class="fa-solid fa-plus"></i></button>
+         </div>
+      </div>
+      <button id="themeToggle" class="icon-btn" title="Giao diện sáng/tối"><i class="fa-regular fa-sun"></i></button>
+    </div>
+  </header>
+
+  <div class="upload-section">
+    <div class="upload-container">
+      <div class="upload-box" id="uploadBox">
+        <div class="upload-content" id="uploadContent">
+          <p class="drop-title">Kéo thả ảnh vào đây</p>
+          <p class="or">hoặc</p>
+          <button id="chooseImgBtn" class="primary-btn"><i class="fa-solid fa-arrow-up-from-bracket"></i> Chọn ảnh</button>
+          <p class="support-text">Hỗ trợ: JPG, PNG, JPEG (Max 10MB)</p>
+          <input type="file" id="fileInput" accept="image/*" hidden>
+        </div>
+      </div>
+      
+      <div class="original-preview-box">
+         <div id="originalPlaceholder" class="placeholder-text" style="height:100%; display:flex; align-items:center; justify-content:center;">Ảnh gốc</div>
+         <div id="fileInfoBox" style="display:none; height:100%; position:relative;">
+            <img id="originalImg" src="" alt="Ảnh gốc">
+            <button id="removeFileBtn" class="icon-btn remove-btn"><i class="fa-regular fa-trash-can"></i></button>
+         </div>
+      </div>
+    </div>
+    
+    <div class="analyze-action">
+      <button id="analyzeBtn" class="primary-btn large-btn" disabled>
+        <i class="fa-solid fa-wand-magic-sparkles"></i> Phân tích
+      </button>
+      <p>AI sẽ phát hiện sản phẩm<br>và đếm số lượng</p>
+    </div>
+  </div>
+
+  <div class="main-grid">
+    <!-- Cột 1: Kết quả (2/3) -->
+    <div class="panel result-panel">
+      <div class="panel-header">
+        <h2><i class="fa-solid fa-wand-magic-sparkles"></i> Kết quả phân tích</h2>
+        <span class="badge" id="detectedCountBadge" style="display:none;">Đã phát hiện: 0 nhãn</span>
+      </div>
+      <div class="image-wrap" id="canvasWrap">
+        <canvas id="canvas"></canvas>
+        <div class="placeholder-text" id="resultPlaceholder">Chưa có kết quả</div>
+        
+        <div class="confidence-bar" id="confidenceBar" style="display:none;">
+          <span>Độ tin cậy trung bình: <span id="avgConfidence">0%</span></span>
+          <div class="progress-bar"><div class="progress" id="confidenceProgress" style="width: 0%;"></div></div>
+        </div>
+      </div>
+      <div id="status" class="status"></div>
+    </div>
+
+    <!-- Cột 2: Thống kê (1/3) -->
+    <div class="side-panel">
+      <div class="panel stat-panel">
+        <div class="panel-header">
+          <h2><i class="fa-solid fa-chart-column"></i> Thống kê kết quả</h2>
+        </div>
+        
+        <div class="stat-cards">
+          <div class="stat-card">
+            <div class="stat-label">Tổng box</div>
+            <div class="stat-value" id="totalDetected">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Nhận diện</div>
+            <div class="stat-value" id="totalRecognized">0</div>
+          </div>
+        </div>
+        <div class="stat-cards">
+            <div class="stat-card highlight-card">
+              <div class="stat-label">Tổng sản phẩm</div>
+              <div class="stat-value" id="totalProducts">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Số loại</div>
+              <div class="stat-value" id="totalTypes">0</div>
+            </div>
+        </div>
+
+        <div class="table-container">
+          <table id="countsTable" class="custom-table">
+            <thead>
+              <tr>
+                <th>Nhãn sản phẩm</th>
+                <th class="text-right">Số lượng</th>
+                <th class="text-right">Tỷ lệ</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Data -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel chart-panel">
+        <div class="panel-header">
+          <h2><i class="fa-solid fa-chart-pie"></i> Phân bố theo tỷ lệ</h2>
+        </div>
+        <div class="chart-container">
+          <canvas id="donutChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+numpy
+pandas
+Pillow
+torch
+torchvision
+faiss-cpu
+matplotlib
+opencv-python
+scipy
+fastapi
+uvicorn[standard]
+python-multipart

@@ -1,0 +1,51 @@
+# Môi trường ảo (Virtual Environments)
+.venv/
+venv/
+env/
+ENV/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Dữ liệu dự án cụ thể (Các file lớn)
+checkpoints/
+embeddings/
+faiss_index/
+data/
+
+# Logs và Temp files
+*.log
+tmp/
+temp/
+
+# IDE và Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Hệ điều hành (OS)
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
