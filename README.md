@@ -725,3 +725,4 @@ Qua đó hệ thống có thể được mở rộng cho các bài toán thực 
 * Phân tích hình ảnh kệ hàng.
 * Hỗ trợ quản lý tồn kho.
 * Xây dựng hệ thống Retail Computer Vision.
+
