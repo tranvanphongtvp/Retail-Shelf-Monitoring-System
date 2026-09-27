@@ -1,95 +1,207 @@
-# 🛒 SKU Recognition System — Nhận Diện Sản Phẩm Trên Kệ Hàng
+# 🛒 Shelf Product Recognition — Nhận Diện Sản Phẩm Trên Kệ Hàng
 
-Hệ thống **SKU Recognition** là một ứng dụng Computer Vision dùng để **phát hiện, nhận diện và thống kê sản phẩm trên kệ hàng từ hình ảnh**.
+Hệ thống **Shelf Product Recognition** là một ứng dụng Computer Vision được xây dựng để **phát hiện, nhận diện và thống kê các sản phẩm (SKU) trên kệ hàng từ hình ảnh**.
 
-Hệ thống được xây dựng theo pipeline gồm hai giai đoạn chính:
+Hệ thống sử dụng pipeline gồm hai giai đoạn chính:
 
-**RetinaNet → Object Detection → Crop sản phẩm → MobileNetV3 → Feature Embedding → FAISS → SKU Recognition → Thống kê**
+**RetinaNet → Object Detection → Crop sản phẩm → MobileNetV3 → Feature Embedding → FAISS → SKU Recognition → Statistics**
 
-Backend được triển khai bằng **FastAPI**, kết hợp với giao diện Web cho phép người dùng tải ảnh lên, phân tích và trực quan hóa kết quả.
-
----
-
-## Đường link các checkpoints : https://drive.google.com/drive/folders/1jGdX0p8tIiO8To0tW5-vhyTF8PwNtbjW?usp=drive_link
-
-## ✨ 1. Tính năng chính
-
-* 📤 Upload ảnh kệ hàng.
-* 🔍 Phát hiện các sản phẩm bằng **RetinaNet**.
-* 📦 Tự động crop từng vùng sản phẩm được phát hiện.
-* 🧠 Trích xuất đặc trưng hình ảnh bằng **MobileNetV3**.
-* 🔎 Nhận diện SKU bằng **FAISS** và Cosine Similarity.
-* 🗳️ Majority Voting với Top-K kết quả để tăng độ ổn định khi nhận diện.
-* 📊 Thống kê số lượng sản phẩm theo từng SKU.
-* 🖼️ Hiển thị bounding box trực tiếp trên ảnh.
-* ⚙️ Cho phép điều chỉnh ngưỡng confidence/recognition.
-* 🚀 Cung cấp REST API thông qua FastAPI.
-* 🧪 Có các script hỗ trợ debug và kiểm tra chất lượng Gallery.
+Backend được triển khai bằng **FastAPI**, kết hợp với giao diện Web cho phép người dùng upload ảnh, phân tích và trực quan hóa kết quả nhận diện.
 
 ---
 
-# 🏗️ 2. Kiến trúc hệ thống
+# 📌 1. Tổng quan hệ thống
 
 Pipeline xử lý của hệ thống:
 
 ```text
-                    Input Image
-                         │
-                         ▼
-                ┌─────────────────┐
-                │    RetinaNet    │
-                │ Object Detection│
-                └────────┬────────┘
-                         │
-                  Bounding Boxes
-                         │
-                         ▼
-                 Crop từng sản phẩm
-                         │
-                         ▼
-                ┌─────────────────┐
-                │   MobileNetV3   │
-                │ Feature Extractor│
-                └────────┬────────┘
-                         │
-                   Feature Vector
-                         │
-                         ▼
-                ┌─────────────────┐
-                │      FAISS      │
-                │ Similarity Search│
-                └────────┬────────┘
-                         │
-                    Top-K Results
-                         │
-                         ▼
-                Majority Voting
-                         │
-                         ▼
-                  SKU Recognition
-                         │
-                         ▼
-              ┌─────────────────────┐
-              │ Detection + Label   │
-              │ + Statistics        │
-              └─────────────────────┘
+                         Input Image
+                              │
+                              ▼
+                    ┌─────────────────┐
+                    │    RetinaNet    │
+                    │ Object Detection│
+                    └────────┬────────┘
+                             │
+                       Bounding Boxes
+                             │
+                             ▼
+                    Crop từng sản phẩm
+                             │
+                             ▼
+                    ┌─────────────────┐
+                    │   MobileNetV3   │
+                    │ Feature Extractor│
+                    └────────┬────────┘
+                             │
+                       Feature Vector
+                             │
+                             ▼
+                    ┌─────────────────┐
+                    │      FAISS      │
+                    │ Similarity Search│
+                    └────────┬────────┘
+                             │
+                         Top-K Results
+                             │
+                             ▼
+                      Majority Voting
+                             │
+                             ▼
+                      SKU Recognition
+                             │
+                             ▼
+                ┌────────────────────────┐
+                │ Bounding Boxes + Labels│
+                │ + Product Statistics   │
+                └────────────────────────┘
 ```
-
-### Các thành phần chính
-
-| Thành phần              | Vai trò                              |
-| ----------------------- | ------------------------------------ |
-| **RetinaNet**           | Phát hiện vị trí sản phẩm            |
-| **MobileNetV3**         | Trích xuất vector đặc trưng          |
-| **FAISS**               | Tìm kiếm các sản phẩm tương đồng     |
-| **Cosine Similarity**   | Đo mức độ tương đồng giữa các vector |
-| **Majority Voting**     | Chọn SKU dựa trên các kết quả Top-K  |
-| **FastAPI**             | Cung cấp Backend API                 |
-| **HTML/CSS/JavaScript** | Xây dựng giao diện Web               |
 
 ---
 
-# 📁 3. Cấu trúc thư mục
+# 🧠 2. Kiến trúc và công nghệ
+
+| Thành phần         | Công nghệ                   | Chức năng                              |
+| ------------------ | --------------------------- | -------------------------------------- |
+| Object Detection   | **RetinaNet**               | Phát hiện vị trí sản phẩm trên kệ      |
+| Feature Extraction | **MobileNetV3**             | Trích xuất đặc trưng hình ảnh sản phẩm |
+| Similarity Search  | **FAISS**                   | Tìm kiếm sản phẩm tương đồng           |
+| Similarity Metric  | **Cosine Similarity**       | Đánh giá độ tương đồng giữa embeddings |
+| Recognition        | **Majority Voting**         | Xác định SKU từ Top-K kết quả          |
+| Backend            | **FastAPI**                 | Cung cấp API phân tích ảnh             |
+| Server             | **Uvicorn**                 | Chạy FastAPI                           |
+| Frontend           | **HTML / CSS / JavaScript** | Giao diện người dùng                   |
+| Image Processing   | **OpenCV**                  | Xử lý và crop ảnh                      |
+| Deep Learning      | **PyTorch / Torchvision**   | Xây dựng và inference model            |
+
+---
+
+# 📊 3. Datasets
+
+Project sử dụng **hai dataset cho hai giai đoạn khác nhau** trong pipeline.
+
+## 3.1. Dataset cho Object Detection — SKU110K
+
+**SKU110K** được sử dụng cho giai đoạn **phát hiện sản phẩm trên kệ hàng**.
+
+Dataset chứa các hình ảnh kệ hàng với mật độ sản phẩm cao và bounding box cho các sản phẩm. Đây là dữ liệu phù hợp để huấn luyện RetinaNet học cách xác định vị trí sản phẩm.
+
+### Mục đích sử dụng
+
+```text
+SKU110K
+   ↓
+Train RetinaNet
+   ↓
+Object Detection
+   ↓
+Bounding Boxes
+```
+
+### Dataset
+
+📦 **SKU110K Fixed — Kaggle**
+
+👉 [tại đây](https://www.kaggle.com/datasets/lordrovks/sku110k-fixed)
+
+Dataset này được sử dụng cho phần **Detection** của hệ thống.
+
+---
+
+# 🛍️ 3.2. Dataset cho Product Recognition — SHAPE
+
+Đối với giai đoạn **nhận diện SKU**, project sử dụng **SHAPE — SHelf mAnagement Product datasEt**, dataset sản phẩm được cung cấp bởi nhóm tác giả của bài báo:
+
+**Shelf Management: A Deep Learning-Based System for Shelf Visual Monitoring**
+
+Pipeline trong bài báo sử dụng **MobileNetV3 + FAISS** cho bài toán product recognition, tương tự hướng triển khai của project này.
+
+### Mục đích sử dụng
+
+```text
+SHAPE Dataset
+      ↓
+Train MobileNetV3
+      ↓
+Feature Extraction
+      ↓
+Product Embeddings
+      ↓
+FAISS Gallery
+      ↓
+SKU Recognition
+```
+
+### Dataset SHAPE của tác giả
+
+📦 **SHAPE — SHelf mAnagement Product datasEt**
+
+👉 [tại đây](https://figshare.com/articles/dataset/SHAPE_-_SHelf_mAnagement_Product_datasEt/24100704)
+
+Dataset được chia thành:
+
+```text
+training_set/
+    ├── category_1/
+    │      ├── EAN_1/
+    │      ├── EAN_2/
+    │      └── ...
+    │
+    ├── category_2/
+    │      └── ...
+    │
+    └── ...
+
+test_set/
+    ├── category_1/
+    ├── category_2/
+    └── ...
+```
+
+Trong đó các thư mục EAN được sử dụng làm nhãn cho từng sản phẩm.
+
+---
+
+# 🔗 4. Checkpoints
+
+Các checkpoint của project được lưu trữ trên Google Drive.
+
+📦 **Model Checkpoints**
+
+👉 [tại đây](https://drive.google.com/drive/folders/1jGdX0p8tIiO8To0tW5-vhyTF8PwNtbjW?usp=drive_link)
+
+Các checkpoint có thể bao gồm:
+
+```text
+checkpoints/
+│
+├── RetinaNet
+│
+└── MobileNetV3
+```
+
+Sau khi tải checkpoint, đặt chúng vào thư mục tương ứng trong project.
+
+---
+
+# ✨ 5. Các tính năng chính
+
+* 📤 Upload ảnh kệ hàng.
+* 🔍 Phát hiện sản phẩm bằng **RetinaNet**.
+* 📦 Tự động crop từng sản phẩm từ bounding box.
+* 🧠 Trích xuất đặc trưng bằng **MobileNetV3**.
+* 🔎 Nhận diện sản phẩm bằng **FAISS**.
+* 📐 Sử dụng **Cosine Similarity** để tìm sản phẩm tương đồng.
+* 🗳️ Majority Voting dựa trên Top-K kết quả.
+* 📊 Thống kê số lượng từng SKU.
+* 🖼️ Hiển thị bounding box và nhãn trực tiếp trên ảnh.
+* ⚙️ Điều chỉnh ngưỡng recognition.
+* 🚀 REST API với FastAPI.
+* 🧪 Các công cụ debug và kiểm tra Gallery.
+
+---
+
+# 📁 6. Cấu trúc thư mục
 
 ```text
 SKU_project/
@@ -127,24 +239,22 @@ SKU_project/
 └── README.md
 ```
 
-> Nếu tên thư mục frontend trong project hiện tại là `fontend`, nên đổi thành `frontend` để tránh nhầm lẫn và tuân theo cách đặt tên phổ biến.
-
 ---
 
-# ⚙️ 4. Cài đặt
+# ⚙️ 7. Cài đặt môi trường
 
-## 4.1. Yêu cầu
+## 7.1. Yêu cầu
 
-Khuyến nghị sử dụng:
+Khuyến nghị:
 
 * Python 3.10+
 * Windows / Linux
 * Virtual Environment hoặc Conda
 * GPU NVIDIA nếu muốn tăng tốc inference
 
-## 4.2. Cài đặt thư viện
+---
 
-Tạo môi trường ảo:
+## 7.2. Tạo Virtual Environment
 
 ```bash
 python -m venv .venv
@@ -156,7 +266,9 @@ Kích hoạt trên Windows:
 .venv\Scripts\activate
 ```
 
-Cài đặt các thư viện:
+---
+
+## 7.3. Cài đặt thư viện
 
 ```bash
 pip install torch torchvision
@@ -165,7 +277,7 @@ pip install fastapi uvicorn
 pip install faiss-cpu
 ```
 
-Nếu hệ thống sử dụng GPU và môi trường FAISS tương thích:
+Nếu sử dụng GPU và môi trường hỗ trợ:
 
 ```bash
 pip install faiss-gpu
@@ -173,11 +285,9 @@ pip install faiss-gpu
 
 ---
 
-# 🚀 5. Khởi chạy hệ thống
+# 🚀 8. Khởi chạy Backend
 
-## 5.1. Chạy Backend
-
-Mở Terminal tại thư mục gốc của project:
+Mở Terminal tại thư mục gốc:
 
 ```text
 E:/SKU_project
@@ -189,7 +299,7 @@ Sau đó chạy:
 uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-Nếu server khởi động thành công, API sẽ hoạt động tại:
+API sẽ hoạt động tại:
 
 ```text
 http://localhost:8000
@@ -203,93 +313,160 @@ http://localhost:8000/docs
 
 ---
 
-# 🖥️ 6. Frontend
+# 🖥️ 9. Khởi chạy Frontend
 
-Mở file:
+Mở:
 
 ```text
 frontend/index.html
 ```
 
-bằng trình duyệt như:
+bằng:
 
 * Google Chrome
 * Microsoft Edge
 * Cốc Cốc
 
-Frontend sẽ gửi request phân tích ảnh tới:
+Frontend sẽ gửi ảnh tới API:
 
 ```text
 http://localhost:8000/analyze
 ```
 
-### Quy trình sử dụng
+---
+
+# 🔄 10. Quy trình xử lý
 
 ```text
-Upload ảnh
-    ↓
+Upload Image
+      ↓
 Nhấn Analyze
-    ↓
+      ↓
 Frontend gửi ảnh tới FastAPI
-    ↓
+      ↓
 RetinaNet phát hiện sản phẩm
-    ↓
-Crop từng bounding box
-    ↓
-MobileNetV3 tạo embedding
-    ↓
-FAISS tìm sản phẩm tương đồng
-    ↓
-Majority Voting xác định SKU
-    ↓
-Trả kết quả về Frontend
-    ↓
-Hiển thị bounding box + SKU + thống kê
+      ↓
+Bounding Boxes
+      ↓
+Crop từng sản phẩm
+      ↓
+MobileNetV3 tạo Feature Embedding
+      ↓
+FAISS Similarity Search
+      ↓
+Top-K Results
+      ↓
+Majority Voting
+      ↓
+SKU Recognition
+      ↓
+Thống kê sản phẩm
+      ↓
+Hiển thị Bounding Boxes + Labels
 ```
 
 ---
 
-# 🔎 7. Recognition bằng FAISS
+# 🔎 11. Object Detection với RetinaNet
 
-Sau khi RetinaNet phát hiện sản phẩm, mỗi bounding box sẽ được crop ra thành một ảnh riêng.
+RetinaNet chịu trách nhiệm xác định vị trí các sản phẩm trong ảnh kệ hàng.
+
+Input:
+
+```text
+Shelf Image
+```
+
+Output:
+
+```text
+Bounding Boxes
+```
 
 Ví dụ:
 
 ```text
-Input Image
-     │
-     ├── Product 1
-     ├── Product 2
-     ├── Product 3
-     └── Product 4
+Product 1 → [x1, y1, x2, y2]
+Product 2 → [x1, y1, x2, y2]
+Product 3 → [x1, y1, x2, y2]
 ```
 
-Mỗi crop được đưa qua MobileNetV3 để tạo một vector đặc trưng:
+Các bounding box sau đó được sử dụng để crop từng sản phẩm.
+
+---
+
+# 🧠 12. Product Recognition với MobileNetV3
+
+Sau khi phát hiện sản phẩm, từng bounding box được crop:
+
+```text
+Shelf Image
+     ↓
+RetinaNet
+     ↓
+Bounding Box
+     ↓
+Product Crop
+```
+
+Product Crop được đưa vào MobileNetV3:
 
 ```text
 Product Crop
-     ↓
+      ↓
 MobileNetV3
-     ↓
+      ↓
+Feature Extractor
+      ↓
 Feature Vector
-     ↓
-FAISS Search
 ```
 
-FAISS sau đó tìm những vector trong Gallery có độ tương đồng cao nhất.
+Feature vector đại diện cho đặc trưng hình ảnh của sản phẩm.
 
 ---
 
-# 🗳️ 8. Majority Voting
+# 🔍 13. Similarity Search với FAISS
 
-Hệ thống không nhất thiết lấy ngay kết quả Top-1.
+Các feature vector của Gallery được lưu trước:
 
-Thay vào đó, hệ thống lấy **Top-K kết quả gần nhất** và sử dụng Majority Voting để giảm ảnh hưởng của những mẫu Gallery bị nhiễu.
+```text
+Gallery Images
+      ↓
+MobileNetV3
+      ↓
+Embeddings
+      ↓
+gallery_embeddings.npz
+      ↓
+FAISS Index
+```
+
+Khi có một sản phẩm mới:
+
+```text
+Query Product
+      ↓
+MobileNetV3
+      ↓
+Query Embedding
+      ↓
+FAISS
+      ↓
+Top-K Similar Products
+```
+
+FAISS giúp tìm kiếm nhanh những sản phẩm có vector đặc trưng gần với sản phẩm đầu vào.
+
+---
+
+# 🗳️ 14. Majority Voting
+
+Thay vì chỉ sử dụng kết quả Top-1, hệ thống lấy **Top-K kết quả gần nhất** và thực hiện Majority Voting.
 
 Ví dụ:
 
 ```text
-Top-5 FAISS results:
+Top-5 Results:
 
 SKU_001
 SKU_001
@@ -298,13 +475,13 @@ SKU_001
 SKU_002
 ```
 
-Kết quả:
+Kết quả cuối cùng:
 
 ```text
 Predicted SKU = SKU_001
 ```
 
-Với cấu hình mặc định:
+Cấu hình mặc định:
 
 ```python
 TOP_K = 5
@@ -312,9 +489,9 @@ TOP_K = 5
 
 ---
 
-# ⚙️ 9. Cấu hình Recognition
+# ⚙️ 15. Cấu hình Recognition
 
-Các thông số chính được đặt trong:
+Các thông số recognition được đặt trong:
 
 ```text
 backend/api/config.py
@@ -327,49 +504,27 @@ RECOGNIZE_THRESHOLD = 0.85
 TOP_K = 5
 ```
 
-### `RECOGNIZE_THRESHOLD`
+## `RECOGNIZE_THRESHOLD`
 
-Ngưỡng similarity tối thiểu để chấp nhận kết quả nhận diện.
+Ngưỡng similarity tối thiểu để chấp nhận kết quả.
 
 ```text
 Similarity >= 0.85
         ↓
-   Accept SKU
-
-Similarity < 0.85
-        ↓
-   Reject / Unknown
+    Accept SKU
 ```
-
-Ngưỡng này có thể được điều chỉnh tùy thuộc vào chất lượng Gallery và đặc trưng của dữ liệu.
-
-### `TOP_K`
-
-Số lượng kết quả gần nhất được lấy từ FAISS để thực hiện Majority Voting.
-
-Ví dụ:
-
-```python
-TOP_K = 5
-```
-
-có nghĩa là hệ thống lấy 5 kết quả gần nhất.
-
----
-
-# 🧪 10. Công cụ Debug và quản lý Gallery
-
-Thư mục:
 
 ```text
-src/
+Similarity < 0.85
+        ↓
+    Reject / Unknown
 ```
 
-chứa các script hỗ trợ kiểm tra và cải thiện hệ thống Recognition.
+Giá trị threshold có thể được điều chỉnh dựa trên chất lượng Gallery và kết quả thực tế.
 
 ---
 
-## 10.1. Debug Recognition
+# 🧪 16. Debug Recognition
 
 File:
 
@@ -377,7 +532,7 @@ File:
 src/debug_recognition.py
 ```
 
-Dùng để kiểm tra tại sao một sản phẩm bị nhận diện sai hoặc một sản phẩm bị phân thành nhiều SKU khác nhau.
+Dùng để kiểm tra các trường hợp nhận diện sai.
 
 ### Debug một ảnh
 
@@ -385,15 +540,13 @@ Dùng để kiểm tra tại sao một sản phẩm bị nhận diện sai hoặ
 python src/debug_recognition.py --image data/anh_cua_ban.jpg
 ```
 
-### Debug toàn bộ thư mục
+### Debug một thư mục
 
 ```bash
 python src/debug_recognition.py --image_dir data/
 ```
 
-Script sẽ hiển thị các kết quả Top-K để quan sát mức độ tương đồng giữa sản phẩm cần nhận diện và Gallery.
-
-Ví dụ:
+Script sẽ hiển thị Top-K kết quả:
 
 ```text
 Query Product
@@ -405,11 +558,16 @@ Query Product
       └── SKU_001 : 0.82
 ```
 
-Qua đó có thể xác định nguyên nhân nhận diện sai hoặc Gallery có dữ liệu gây nhiễu.
+Điều này giúp kiểm tra:
+
+* Model đang nhận diện sản phẩm nào.
+* Các SKU nào dễ nhầm lẫn.
+* Similarity giữa query và Gallery.
+* Gallery có chứa mẫu gây nhiễu hay không.
 
 ---
 
-# 🔬 10.2. Audit Gallery
+# 🔬 17. Audit Gallery
 
 File:
 
@@ -417,24 +575,24 @@ File:
 src/audit_gallery.py
 ```
 
-Dùng để kiểm tra chất lượng Gallery Embeddings.
-
 Chạy:
 
 ```bash
 python src/audit_gallery.py
 ```
 
-Script hỗ trợ phát hiện các vấn đề như:
+Script được sử dụng để kiểm tra chất lượng Gallery Embeddings.
+
+Có thể hỗ trợ phát hiện:
 
 * Embedding bất thường.
-* Mẫu dữ liệu có khả năng là outlier.
-* Các mẫu thuộc những SKU khác nhau nhưng có độ tương đồng quá cao.
-* Gallery có dữ liệu gây nhầm lẫn giữa các SKU.
+* Outlier.
+* Các SKU khác nhau nhưng có embedding quá giống nhau.
+* Các mẫu Gallery có khả năng gây nhầm lẫn.
 
 ---
 
-# 🧹 10.3. Clean Gallery
+# 🧹 18. Clean Gallery
 
 File:
 
@@ -442,15 +600,15 @@ File:
 src/clean_gallery.py
 ```
 
-Dùng để loại bỏ những mẫu không phù hợp khỏi Gallery.
-
 Chạy:
 
 ```bash
 python src/clean_gallery.py
 ```
 
-Sau khi xử lý, hệ thống có thể tạo:
+Script được sử dụng để làm sạch Gallery và build lại FAISS Index.
+
+Ví dụ:
 
 ```text
 embeddings/
@@ -461,15 +619,15 @@ faiss_index/
 └── shape_gallery.index
 ```
 
-Gallery sạch được sử dụng để build lại FAISS Index, giúp quá trình tìm kiếm ổn định hơn.
+Sau khi Gallery được làm sạch, FAISS Index được cập nhật để sử dụng tập dữ liệu tốt hơn cho quá trình recognition.
 
 ---
 
-# 🖼️ 11. Gallery Embeddings
+# 🖼️ 19. Gallery Embeddings
 
-Gallery là tập ảnh mẫu dùng làm cơ sở để nhận diện SKU.
+Gallery là tập ảnh tham chiếu được sử dụng để nhận diện SKU.
 
-Mỗi SKU nên có nhiều ảnh đại diện, ví dụ:
+Ví dụ:
 
 ```text
 SKU_001/
@@ -480,7 +638,7 @@ SKU_001/
 └── image_05.jpg
 ```
 
-Các ảnh này được đưa qua MobileNetV3:
+Quy trình tạo Gallery:
 
 ```text
 Gallery Image
@@ -496,9 +654,9 @@ FAISS Index
 
 ---
 
-# 📌 12. Thêm SKU mới
+# 📌 20. Thêm SKU mới
 
-Khi thêm một sản phẩm mới, nên chuẩn bị nhiều ảnh crop chất lượng tốt.
+Khi thêm một SKU mới, nên chuẩn bị nhiều ảnh crop chất lượng tốt.
 
 Khuyến nghị tối thiểu:
 
@@ -506,20 +664,19 @@ Khuyến nghị tối thiểu:
 4–5 ảnh / SKU
 ```
 
-Nên bao quát sự thay đổi về:
+Nên có sự đa dạng về:
 
 * Góc nhìn.
 * Khoảng cách.
 * Ánh sáng.
-* Vị trí trên kệ.
+* Vị trí sản phẩm.
 * Kích thước sản phẩm.
-* Một số biến đổi thực tế khác.
+* Điều kiện chụp thực tế.
 
 Ví dụ:
 
 ```text
-SKU_001
-│
+SKU_001/
 ├── front.jpg
 ├── left.jpg
 ├── right.jpg
@@ -527,24 +684,22 @@ SKU_001
 └── shelf.jpg
 ```
 
-Số lượng ảnh nhiều hơn và đa dạng hơn có thể giúp Gallery đại diện tốt hơn cho cùng một SKU, nhưng chất lượng và tính phù hợp của ảnh vẫn rất quan trọng.
+Gallery càng đa dạng và phù hợp với dữ liệu thực tế thì khả năng retrieval có thể càng ổn định.
 
 ---
 
-# 🔄 13. Cập nhật FAISS Index
+# 🔄 21. Cập nhật FAISS Index
 
-Sau khi cập nhật Gallery Embeddings, cần build lại FAISS Index để hệ thống nhận diện được dữ liệu mới.
-
-Quy trình:
+Sau khi thêm hoặc thay đổi Gallery:
 
 ```text
 Thêm ảnh SKU mới
        ↓
 Generate Embeddings
        ↓
-Update Gallery Embeddings
+Update Gallery
        ↓
-Clean / Audit Gallery
+Audit / Clean Gallery
        ↓
 Build FAISS Index
        ↓
@@ -555,22 +710,15 @@ Test Recognition
 
 ---
 
-# 📊 14. Kết quả đầu ra
+# 📊 22. Kết quả đầu ra
 
-Sau khi phân tích ảnh, hệ thống trả về thông tin của từng sản phẩm được phát hiện.
+Sau khi phân tích ảnh, hệ thống hiển thị bounding box và SKU tương ứng.
 
 Ví dụ:
 
 ```text
-Input:
-Shelf Image
-```
-
-Kết quả:
-
-```text
 ┌─────────────────────────────────┐
-│ Product Detection               │
+│ Product Statistics              │
 │                                 │
 │ SKU_001    × 3                  │
 │ SKU_002    × 2                  │
@@ -580,11 +728,27 @@ Kết quả:
 └─────────────────────────────────┘
 ```
 
-Trên ảnh kết quả, mỗi sản phẩm được hiển thị bằng bounding box kèm nhãn SKU.
+Trên ảnh kết quả:
+
+```text
+┌─────────────────────────────┐
+│ SKU_001                     │
+│ ┌───────────────┐           │
+│ │               │           │
+│ │   PRODUCT     │           │
+│ │               │           │
+│ └───────────────┘           │
+│                             │
+│ SKU_002                     │
+│ ┌───────────────┐           │
+│ │   PRODUCT     │           │
+│ └───────────────┘           │
+└─────────────────────────────┘
+```
 
 ---
 
-# 🧩 15. API
+# 🧩 23. API
 
 Endpoint chính:
 
@@ -594,7 +758,7 @@ POST /analyze
 
 ### Input
 
-Ảnh sản phẩm/kệ hàng được upload lên API.
+Ảnh kệ hàng được upload lên Backend.
 
 ### Processing
 
@@ -614,11 +778,62 @@ Majority Voting
 
 ### Output
 
-Thông tin nhận diện và thống kê sản phẩm, bao gồm các bounding box, SKU được nhận diện và số lượng theo từng SKU.
+API trả về:
+
+* Bounding boxes.
+* SKU được nhận diện.
+* Similarity score.
+* Danh sách sản phẩm.
+* Thống kê số lượng từng SKU.
+* Tổng số sản phẩm được phát hiện.
 
 ---
 
-# 🎯 16. Công nghệ sử dụng
+# 📦 24. Datasets & Resources
+
+## Object Detection
+
+**SKU110K Fixed — Kaggle**
+
+👉 [tại đây](https://www.kaggle.com/datasets/lordrovks/sku110k-fixed)
+
+Dùng cho:
+
+```text
+RetinaNet
+    ↓
+Object Detection
+```
+
+---
+
+## Product Recognition
+
+**SHAPE — SHelf mAnagement Product datasEt**
+
+Dataset được cung cấp bởi nhóm tác giả của bài báo **Shelf Management: A Deep Learning-Based System for Shelf Visual Monitoring**.
+
+👉 [tại đây](https://figshare.com/articles/dataset/SHAPE_-_SHelf_mAnagement_Product_datasEt/24100704)
+
+Dùng cho:
+
+```text
+MobileNetV3
+    ↓
+Feature Extraction
+    ↓
+Product Recognition
+```
+
+---
+
+## Model Checkpoints
+
+👉 [tại đây](https://drive.google.com/drive/folders/1jGdX0p8tIiO8To0tW5-vhyTF8PwNtbjW?usp=drive_link)
+
+---
+
+# 🛠️ 25. Công nghệ sử dụng
 
 ### Computer Vision
 
@@ -632,7 +847,7 @@ Thông tin nhận diện và thống kê sản phẩm, bao gồm các bounding b
 
 * FAISS
 * Cosine Similarity
-* Embedding-based Retrieval
+* Feature Embedding
 * Majority Voting
 
 ### Backend
@@ -647,82 +862,44 @@ Thông tin nhận diện và thống kê sản phẩm, bao gồm các bounding b
 * CSS
 * JavaScript
 
-### Data
+### Dataset
 
-* SKU/Product Images
-* Gallery Embeddings
-* FAISS Index
+* SKU110K
+* SHAPE
 
 ---
 
-# 📌 17. Tổng quan hệ thống
+# 🎯 26. Mục tiêu dự án
 
-Toàn bộ hệ thống có thể được mô tả ngắn gọn như sau:
+Dự án hướng tới việc xây dựng một pipeline Computer Vision hoàn chỉnh cho bài toán:
+
+**Product Detection & SKU Recognition**
+
+kết hợp:
 
 ```text
-                 ┌──────────────┐
-                 │   User       │
-                 └──────┬───────┘
-                        │
-                    Upload Image
-                        │
-                        ▼
-              ┌───────────────────┐
-              │     FastAPI       │
-              │      Backend      │
-              └─────────┬─────────┘
-                        │
-                        ▼
-              ┌───────────────────┐
-              │     RetinaNet     │
-              │  Object Detection │
-              └─────────┬─────────┘
-                        │
-                  Product Crops
-                        │
-                        ▼
-              ┌───────────────────┐
-              │    MobileNetV3    │
-              │ Feature Extraction│
-              └─────────┬─────────┘
-                        │
-                   Embeddings
-                        │
-                        ▼
-              ┌───────────────────┐
-              │       FAISS       │
-              │ Similarity Search │
-              └─────────┬─────────┘
-                        │
-                     Top-K
-                        │
-                        ▼
-              ┌───────────────────┐
-              │ Majority Voting   │
-              │   SKU Recognition │
-              └─────────┬─────────┘
-                        │
-                        ▼
-              ┌───────────────────┐
-              │ Statistics + UI   │
-              │ Bounding Boxes    │
-              └───────────────────┘
+Object Detection
+       +
+Feature Extraction
+       +
+Vector Similarity Search
+       +
+SKU Recognition
+       +
+Backend API
+       +
+Web Interface
 ```
 
----
+Hệ thống có thể được mở rộng cho các bài toán thực tế như:
 
-## 🚀 18. Mục tiêu của dự án
+* 🛒 Quản lý hàng hóa trên kệ.
+* 📦 Kiểm kê sản phẩm tự động.
+* 🔎 Nhận diện SKU.
+* 📊 Phân tích hình ảnh kệ hàng.
+* 📋 Hỗ trợ quản lý tồn kho.
+* 🏪 Retail Computer Vision.
+* 📐 Shelf monitoring.
+* 🤖 Automated inventory analysis.
 
-Dự án hướng tới việc xây dựng một pipeline Computer Vision hoàn chỉnh cho bài toán **Product Detection & SKU Recognition**, kết hợp:
-
-**Object Detection + Feature Extraction + Vector Similarity Search + Backend API + Web Interface**
-
-Qua đó hệ thống có thể được mở rộng cho các bài toán thực tế như:
-
-* Quản lý hàng hóa trên kệ.
-* Kiểm kê sản phẩm tự động.
-* Nhận diện SKU.
-* Phân tích hình ảnh kệ hàng.
-* Hỗ trợ quản lý tồn kho.
-* Xây dựng hệ thống Retail Computer Vision.
-
+👉 [tại đây](https://github.com/rokopi-byte/shelf_management)
