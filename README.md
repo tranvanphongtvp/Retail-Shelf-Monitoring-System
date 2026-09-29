@@ -1,4 +1,4 @@
-# 🛒 Shelf Product Recognition — Nhận Diện Sản Phẩm Trên Kệ Hàng
+# 🛒 Retail Shelf Monitoring System — Nhận Diện Sản Phẩm Trên Kệ Hàng
 
 Hệ thống **Shelf Product Recognition** là một ứng dụng Computer Vision được xây dựng để **phát hiện, nhận diện và thống kê các sản phẩm (SKU) trên kệ hàng từ hình ảnh**.
 
